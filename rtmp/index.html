@@ -8,19 +8,32 @@
   </head>
   <body>
     <h2>Live Stream</h2>
-    <video id="video" width="800" controls></video>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <video id="video" width="800" controls autoplay></video>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.3.1/dist/socket.io.min.js"></script>
     <script>
-      var video = document.getElementById("video");
-      var videoSrc = "http://13.60.197.133:8080/hls/deepak.m3u8";
+      const video = document.getElementById("video");
+      const socket = io('http://localhost:3000', {
+        withCredentials: false,
+        transports: ['websocket']
+      });
+      
+      let mediaSource = new MediaSource();
+      video.src = URL.createObjectURL(mediaSource);
 
-      if (Hls.isSupported()) {
-        var hls = new Hls();
-        hls.loadSource(videoSrc);
-        hls.attachMedia(video);
-      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = videoSrc;
+      mediaSource.addEventListener('sourceopen', sourceOpen);
+
+      function sourceOpen() {
+        let sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8,opus"');
+        
+        socket.on('stream', (data) => {
+          let arrayBuffer = new Uint8Array(data).buffer;
+          sourceBuffer.appendBuffer(arrayBuffer);
+        });
       }
+
+      video.addEventListener('error', (e) => {
+        console.error('Video error:', video.error, e);
+      });
     </script>
   </body>
 </html>

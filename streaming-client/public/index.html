@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Streaming</title>
+</head>
+<body>
+    <h1>Webcam Streaming</h1>
+    <video id="localVideo" autoplay muted></video>
+    <button id="startButton">Start Streaming</button>
+    <button id="stopButton" disabled>Stop Streaming</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.3.1/dist/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:3000', {
+            withCredentials: false,
+            transports: ['websocket']
+        });
+        const localVideo = document.getElementById('localVideo');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        let mediaRecorder;
+        let stream;
+
+        startButton.addEventListener('click', startStreaming);
+        stopButton.addEventListener('click', stopStreaming);
+
+        async function startStreaming() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localVideo.srcObject = stream;
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8,opus' });
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        event.data.arrayBuffer().then(buffer => {
+                            socket.emit('stream', buffer);
+                        });
+                    }
+                };
+
+                mediaRecorder.start(100);
+                startButton.disabled = true;
+                stopButton.disabled = false;
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+            }
+        }
+
+        function stopStreaming() {
+            mediaRecorder.stop();
+            stream.getTracks().forEach(track => track.stop());
+            startButton.disabled = false;
+            stopButton.disabled = true;
+        }
+    </script>
+</body>
+</html>

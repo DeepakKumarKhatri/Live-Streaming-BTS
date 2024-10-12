@@ -1,0 +1,17 @@
+{
+  "name": "stream-server",
+  "version": "1.0.0",
+  "main": "stream-server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^4.3.1",
+    "cors": "^2.8.5"
+  }
+}
